@@ -252,13 +252,18 @@ Private Sub SortArray(ByRef arr As Variant, ByRef sort_cols As Variant)
     ' Cleanup
     ActiveWorkbook.Worksheets(ws_index).Select
     Application.DisplayAlerts = False
-    ActiveWorkbook.Worksheets(sheetName).Delete
+    With ActiveWorkbook.Worksheets(sheetName)
+        .Activate
+        .Delete
+    End With
     Application.DisplayAlerts = True
 
 End Sub
 
 
-Private Sub UpdateItemDescription(table As ListObject, itemColumnName As String, beforeColumnName As String)
+
+
+Private Sub UpsertItemColumn(table As ListObject, itemColumnName As String, beforeColumnName As String)
     '
     Dim arr() As Variant
     Dim column() As Variant
@@ -266,13 +271,12 @@ Private Sub UpdateItemDescription(table As ListObject, itemColumnName As String,
     Dim row As Long
     
     InsertColumnBefore table, itemColumnName, beforeColumnName, "Left"
-    arr = GetArray(table, [{"Manufacturer", "#SKU", "Cases (Product Detail)", "PRODUCT_DESCRIPTION"}])
+    arr = GetArray(table, Array("Manufacturer", "#SKU", "Cases (Product Detail)", beforeColumnName))
     num_rows = UBound(arr, 1)
     
     AddIndexToArray arr         ' index 5
     SortArray arr, [{1, 2, -3}]
     AddColumnToArray arr        ' index 6
-
 
     ' Initialize the first row
     arr(1, 6) = arr(1, 4)
@@ -303,8 +307,8 @@ Sub PrepareTable()
 
     Set table = GetDataTable("DataTable")
     
-    UpdateItemDescription table, "Item Description", "PRODUCT_DESCRIPTION"
-    InsertColumnBefore table, "Item Pack", "Pack Size"
+    UpsertItemColumn table, "Item Description", "PRODUCT_DESCRIPTION"
+    UpsertItemColumn table, "Item Pack", "Pack Size"
     
     InsertColumnBefore table, "School Year", "Date"
     InsertColumnBefore table, "School Year 1H", "Date"
