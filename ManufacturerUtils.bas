@@ -2,12 +2,16 @@ Attribute VB_Name = "ManufacturerUtils"
 Option Explicit
 Option Base 1
 
-Function SheetExists(sheetName As String) As Boolean
+Private Function SheetExists(sheetName As String) As Boolean
     Dim sheet As Worksheet
 
     For Each sheet In ActiveWorkbook.Worksheets
-        If sheet.Name = sheetName Then SheetExists = True
+        If sheet.Name = sheetName Then
+            SheetExists = True
+            Exit Function
+        End If
     Next sheet
+    SheetExists = False
 End Function
 
 
@@ -16,31 +20,33 @@ Private Function TableExists(tableName As String) As Boolean
     Dim table As ListObject
 
     For Each table In ActiveSheet.ListObjects
-        If table.Name = tableName Then TableExists = True
+        If table.Name = tableName Then
+            TableExists = True
+            Exit Function
+        End If
     Next table
+    TableExists = False
 End Function
 
 
-Private Function ColumnExists(tableName As String, columnName As String) As Boolean
-    Dim table As ListObject
+Private Function ColumnExists(table As ListObject, columnName As String) As Boolean
     Dim column As ListColumn
 
-    ColumnExists = False
-    If Not TableExists(tableName) Then
-        Exit Function
-    End If
-    Set table = ActiveSheet.ListObjects(tableName)
     For Each column In table.ListColumns
-        If column.Name = columnName Then ColumnExists = True
+        If column.Name = columnName Then
+            ColumnExists = True
+            Exit Function
+        End If
     Next column
+    ColumnExists = False
 End Function
 
 
-Private Sub CreateDataTable(tableName As String)
-    
+Private Function GetDataTable(tableName As String) As ListObject
     ' Leave the subroutine early if the DataTable already exists so we can call this many times
+
     If TableExists(tableName) Then
-        Exit Sub
+        Exit Function
     End If
     
     ' Select the entire dataset
@@ -48,49 +54,49 @@ Private Sub CreateDataTable(tableName As String)
 
     ' Create a table object with first row as headers
     ActiveSheet.ListObjects.Add(xlSrcRange, Selection, , xlYes).Name = tableName
+    Set GetDataTable = ActiveSheet.ListObjects(tableName)
 
-End Sub
+End Function
 
 
-Private Sub InsertColumnBefore(tableName As String, columnName As String, beforeName As String)
-    ' 
-    Dim table As ListObject
+Private Sub InsertColumnBefore(table As ListObject, columnName As String, beforeName As String)
+    '
+    Dim column As ListColumn
     Dim before_column As Long
 
-    If ColumnExists(tableName, columnName) Then
+    If ColumnExists(table, columnName) Then
         Exit Sub
     End If
-    Set table = ActiveSheet.ListObjects(tableName)
+
     With table
         before_column = .ListColumns(beforeName).index
         .ListColumns.Add(before_column).Name = columnName
     End With
-    Call FormatHeader(tableName, columnName, "Good")
+
+    Set column = table.ListColumns(columnName)
+
+    FormatHeader table, column, "Good"
 End Sub
 
 
-Private Sub FormatHeader(tableName As String, columnName As String, styleName As String)
-    Dim column As ListColumn
-
-    Set column = ActiveSheet.ListObjects(tableName).ListColumns(columnName)
-    ActiveSheet.ListObjects(tableName).HeaderRowRange(column.index).Select
+Private Sub FormatHeader(table As ListObject, column As ListColumn, styleName As String)
+    '
+    table.HeaderRowRange(column.index).Select
     If styleName = "Good" Then
         Selection.style = "Good"
     End If
 End Sub
 
 
-Private Sub FormatColumn(tableName As String, columnName As String, Optional styleName As String = "Default")
-    Dim column As ListColumn
-
-    Set column = ActiveSheet.ListObjects(tableName).ListColumns(columnName)
+Private Sub FormatColumn(column As ListColumn, Optional styleName As String = "Default")
+    '
     If styleName = "Center" Then
         Call FormatColumnCenter(column)
     End If
 End Sub
 
 
-Private Sub FormatColumnCenter(column As Variant)
+Private Sub FormatColumnCenter(column As ListColumn)
     column.DataBodyRange.Select
     With Selection
         .HorizontalAlignment = xlCenter
@@ -106,18 +112,29 @@ Private Sub FormatColumnCenter(column As Variant)
 End Sub
 
 
-Sub Man_01()
+Sub PrepareTable()
     '
     ' Mfg_Analysis_Start_1
+    ' Re-entrant code. We don't need to call this directly.
     '
-    CreateDataTable "DataTable"
+    Dim table As ListObject
+
+    Set table = GetDataTable("DataTable")
     
-    InsertColumnBefore "DataTable", "Item Description", "PRODUCT_DESCRIPTION"
-    InsertColumnBefore "DataTable", "Item Pack", "Pack Size"
+    UpdateItemDescription table, "Item Description", "PRODUCT_DESCRIPTION"
+    InsertColumnBefore table, "Item Pack", "Pack Size"
     
-    InsertColumnBefore "DataTable", "School Year", "Date"
-    InsertColumnBefore "DataTable", "School Year 1H", "Date"
-    InsertColumnBefore "DataTable", "Year", "Date"
+    InsertColumnBefore table, "School Year", "Date"
+    InsertColumnBefore table, "School Year 1H", "Date"
+    InsertColumnBefore table, "Year", "Date"
+
+End Sub
+
+
+Sub UpdateItemDescription(table As ListObject, itemColumnName As String, beforeColumnName As String)
+    '
+    InsertColumnBefore table, itemColumnName, beforeColumnName
+
 
 End Sub
 
