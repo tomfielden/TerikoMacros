@@ -58,7 +58,7 @@ Private Function GetDataTable(tableName As String) As ListObject
 End Function
 
 
-Private Function InsertColumnBefore(table As ListObject, columnName As String, beforeName As String) As ListColumn
+Private Function InsertColumnBefore(table As ListObject, columnName As String, beforeName As String, Optional styleName As String = "Left") As ListColumn
     '
     Dim before_column As Long
 
@@ -69,7 +69,7 @@ Private Function InsertColumnBefore(table As ListObject, columnName As String, b
 
     Set InsertColumnBefore = table.ListColumns(columnName)
     FormatHeader table, InsertColumnBefore, "Good"
-    FormatColumn InsertColumnBefore, "Center"
+    FormatColumn InsertColumnBefore, styleName
 End Function
 
 
@@ -82,10 +82,12 @@ Private Sub FormatHeader(table As ListObject, column As ListColumn, styleName As
 End Sub
 
 
-Private Sub FormatColumn(column As ListColumn, Optional styleName As String = "Default")
+Private Sub FormatColumn(column As ListColumn, Optional styleName As String)
     '
     If styleName = "Center" Then
         FormatColumnCenter column
+    ElseIf styleName = "Left" Then
+        FormatColumnLeft column
     End If
 End Sub
 
@@ -94,6 +96,21 @@ Private Sub FormatColumnCenter(column As ListColumn)
     column.DataBodyRange.Select
     With Selection
         .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlBottom
+        .WrapText = False
+        .Orientation = 0
+        .AddIndent = False
+        .IndentLevel = 0
+        .ShrinkToFit = False
+        .ReadingOrder = xlContext
+        .MergeCells = False
+    End With
+End Sub
+
+Private Sub FormatColumnLeft(column As ListColumn)
+    column.DataBodyRange.Select
+    With Selection
+        .HorizontalAlignment = xlLeft
         .VerticalAlignment = xlBottom
         .WrapText = False
         .Orientation = 0
@@ -245,19 +262,33 @@ Private Sub UpdateItemDescription(table As ListObject, itemColumnName As String,
     '
     Dim arr() As Variant
     Dim column() As Variant
+    Dim num_rows As Long
+    Dim row As Long
     
-    InsertColumnBefore table, itemColumnName, beforeColumnName
-    arr = GetArray(table, [{"Manufacturer", "#SKU", "PRODUCT_DESCRIPTION", "Cases (NVD)"}])
+    InsertColumnBefore table, itemColumnName, beforeColumnName, "Left"
+    arr = GetArray(table, [{"Manufacturer", "#SKU", "Cases (Product Detail)", "PRODUCT_DESCRIPTION"}])
+    num_rows = UBound(arr, 1)
     
-    AddIndexToArray arr         ' index5
-    SortArray arr, [{1, 2, -4}]
+    AddIndexToArray arr         ' index 5
+    SortArray arr, [{1, 2, -3}]
+    AddColumnToArray arr        ' index 6
+
+
+    ' Initialize the first row
+    arr(1, 6) = arr(1, 3)
+    For row = 2 To num_rows
+        ' manufacturer and SKU match previous row
+        If arr(row, 1) = arr(row - 1, 1) And arr(row, 2) = arr(row - 1, 2) Then
+            ' copy previous description
+            arr(row, 6) = arr(row - 1, 6)
+        Else
+            ' use current description
+            arr(row, 6) = arr(row, 4)
+        End If
+    Next row
     
-    ColumnToArray arr        ' index 6
-    ' AddIndexToArray arr            ' index 6 -- for testing
-    
-    'Sort by the original index column
+    'Re-Sort by the index column to get original order
     SortArray arr, [{5}]
-    
     ' Write the result to the table
     table.ListColumns(itemColumnName).DataBodyRange.Value = GetArrayColumn(arr, 6)
 End Sub
