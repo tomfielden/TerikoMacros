@@ -63,7 +63,7 @@ Private Function InsertColumnBefore(table As ListObject, columnName As String, b
     Dim before_column As Long
 
     If Not ColumnExists(table, columnName) Then
-        before_column = table.ListColumns(beforeName).Index
+        before_column = table.ListColumns(beforeName).index
         table.ListColumns.Add(before_column).Name = columnName
     End If
 
@@ -75,7 +75,7 @@ End Function
 
 Private Sub FormatHeader(table As ListObject, column As ListColumn, styleName As String)
     '
-    table.HeaderRowRange(column.Index).Select
+    table.HeaderRowRange(column.index).Select
     If styleName = "Good" Then
         Selection.style = "Good"
     End If
@@ -150,6 +150,35 @@ Private Sub AddIndexToArray(ByRef arr As Variant)
 End Sub
 
 
+Private Sub AddColumnToArray(ByRef arr As Variant)
+    Dim num_rows As Long
+    Dim num_cols As Long
+
+    num_rows = UBound(arr, 1)
+    num_cols = UBound(arr, 2)
+
+    ReDim Preserve arr(num_rows, num_cols + 1) As Variant
+
+End Sub
+
+
+Private Function GetArrayColumn(ByRef arr As Variant, col_index As Long) As Variant
+    Dim num_rows As Long
+    Dim num_cols As Long
+    Dim row As Long
+    Dim column() As Variant
+
+    num_rows = UBound(arr, 1)
+    num_cols = UBound(arr, 2)
+    ReDim column(num_rows, 1) As Variant
+    
+    For row = 1 To num_rows
+        column(row, 1) = arr(row, col_index)
+    Next row
+
+    GetArrayColumn = column
+End Function
+
 Private Function ArrayToSheet(ByRef arr As Variant, sheetName As String) As Worksheet
     Dim sheet As Worksheet
 
@@ -171,7 +200,7 @@ Private Sub SortArray(ByRef arr As Variant, ByRef sort_cols As Variant)
     Dim sort_col As Variant
     Dim ws_index As Long
 
-    ws_index = ActiveWorkbook.ActiveSheet.Index
+    ws_index = ActiveWorkbook.ActiveSheet.index
 
     sheetName = "__SortArray__"
     Set sheet = ArrayToSheet(arr, sheetName)
@@ -215,12 +244,22 @@ End Sub
 Private Sub UpdateItemDescription(table As ListObject, itemColumnName As String, beforeColumnName As String)
     '
     Dim arr() As Variant
+    Dim column() As Variant
     
     InsertColumnBefore table, itemColumnName, beforeColumnName
     arr = GetArray(table, [{"Manufacturer", "#SKU", "PRODUCT_DESCRIPTION", "Cases (NVD)"}])
-    AddIndexToArray arr
+    
+    AddIndexToArray arr         ' index5
     SortArray arr, [{1, 2, -4}]
     
+    ColumnToArray arr        ' index 6
+    ' AddIndexToArray arr            ' index 6 -- for testing
+    
+    'Sort by the original index column
+    SortArray arr, [{5}]
+    
+    ' Write the result to the table
+    table.ListColumns(itemColumnName).DataBodyRange.Value = GetArrayColumn(arr, 6)
 End Sub
 
 
