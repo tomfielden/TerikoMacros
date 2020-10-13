@@ -63,7 +63,7 @@ Private Function InsertColumnBefore(table As ListObject, columnName As String, b
     Dim before_column As Long
 
     If Not ColumnExists(table, columnName) Then
-        before_column = table.ListColumns(beforeName).index
+        before_column = table.ListColumns(beforeName).Index
         table.ListColumns.Add(before_column).Name = columnName
     End If
 
@@ -75,7 +75,7 @@ End Function
 
 Private Sub FormatHeader(table As ListObject, column As ListColumn, styleName As String)
     '
-    table.HeaderRowRange(column.index).Select
+    table.HeaderRowRange(column.Index).Select
     If styleName = "Good" Then
         Selection.style = "Good"
     End If
@@ -169,6 +169,9 @@ Private Sub SortArray(ByRef arr As Variant, ByRef sort_cols As Variant)
     Dim sheetName As String
     Dim sheet As Worksheet
     Dim sort_col As Variant
+    Dim ws_index As Long
+
+    ws_index = ActiveWorkbook.ActiveSheet.Index
 
     sheetName = "__SortArray__"
     Set sheet = ArrayToSheet(arr, sheetName)
@@ -200,6 +203,12 @@ Private Sub SortArray(ByRef arr As Variant, ByRef sort_cols As Variant)
 
     arr = sheet.Range(sheet.Cells(1, 1), sheet.Cells(UBound(arr, 1), UBound(arr, 2))).Value
 
+    ' Cleanup
+    ActiveWorkbook.Worksheets(ws_index).Select
+    Application.DisplayAlerts = False
+    ActiveWorkbook.Worksheets(sheetName).Delete
+    Application.DisplayAlerts = True
+
 End Sub
 
 
@@ -211,6 +220,7 @@ Private Sub UpdateItemDescription(table As ListObject, itemColumnName As String,
     arr = GetArray(table, [{"Manufacturer", "#SKU", "PRODUCT_DESCRIPTION", "Cases (NVD)"}])
     AddIndexToArray arr
     SortArray arr, [{1, 2, -4}]
+    
 End Sub
 
 
