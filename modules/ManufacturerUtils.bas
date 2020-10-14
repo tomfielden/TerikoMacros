@@ -6,7 +6,7 @@ Private Function SheetExists(sheetName As String) As Boolean
     Dim sheet As Worksheet
 
     For Each sheet In ActiveWorkbook.Worksheets
-        If sheet.Name = sheetName Then
+        If sheet.name = sheetName Then
             SheetExists = True
             Exit Function
         End If
@@ -20,7 +20,7 @@ Private Function TableExists(tableName As String) As Boolean
     Dim table As ListObject
 
     For Each table In ActiveSheet.ListObjects
-        If table.Name = tableName Then
+        If table.name = tableName Then
             TableExists = True
             Exit Function
         End If
@@ -33,7 +33,7 @@ Private Function ColumnExists(table As ListObject, columnName As String) As Bool
     Dim column As ListColumn
 
     For Each column In table.ListColumns
-        If column.Name = columnName Then
+        If column.name = columnName Then
             ColumnExists = True
             Exit Function
         End If
@@ -50,7 +50,7 @@ Private Function GetDataTable(tableName As String) As ListObject
         ActiveSheet.Range("A1").CurrentRegion.Select
     
         ' Create a table object with first row as headers
-        ActiveSheet.ListObjects.Add(xlSrcRange, Selection, , xlYes).Name = tableName
+        ActiveSheet.ListObjects.Add(xlSrcRange, Selection, , xlYes).name = tableName
     End If
     
     Set GetDataTable = ActiveSheet.ListObjects(tableName)
@@ -69,7 +69,7 @@ Private Function InsertColumnBefore(table As ListObject, columnName As String, b
 
     If Not ColumnExists(table, columnName) Then
         before_column = table.ListColumns(beforeName).index
-        table.ListColumns.Add(before_column).Name = columnName
+        table.ListColumns.Add(before_column).name = columnName
     End If
 
     Set InsertColumnBefore = table.ListColumns(columnName)
@@ -214,7 +214,7 @@ Private Function ArrayToSheet(ByRef arr As Variant, sheetName As String) As Work
         ActiveWorkbook.Worksheets(sheetName).Delete
         Application.DisplayAlerts = True
     End If
-    ActiveWorkbook.Worksheets.Add.Name = sheetName
+    ActiveWorkbook.Worksheets.Add.name = sheetName
     Set sheet = ActiveWorkbook.Worksheets(sheetName)
     sheet.Range("A1").Resize(UBound(arr, 1), UBound(arr, 2)) = arr
     Set ArrayToSheet = sheet
@@ -407,7 +407,6 @@ End Sub
 
 Sub PrepareTable()
     '
-    ' Mfg_Analysis_Start_1
     ' Re-entrant code. We don't need to call this directly.
     '
     Dim table As ListObject
@@ -419,7 +418,7 @@ Sub PrepareTable()
     Set cur_sheet = ActiveSheet
     Set cur_range = Selection
 
-    Set table = GetDataTable("DataTable")
+    Set table = GetDataTable("Table1")
     
     UpsertQtrColumn table, "Qtr", "Date"
     UpsertSYHalfColumn table, "SY-Half", "Date"
@@ -436,4 +435,75 @@ Sub PrepareTable()
 End Sub
 
 
+Sub ColumnDuplicator()
+    Dim tableName As String
+    Dim table As ListObject
+    Dim selectColumn As ListColumn
+    Dim sourceColumn As ListColumn
+    Dim targetColumn As ListColumn
+    Dim sourceName As String
+    Dim targetName As String
+    Dim cur_range As Range
+    Const orig As String = "-ORIG"
+    
+    ' Save the current selection. We'll restore it at the end
+    Set cur_range = Selection
+    
+    ' Only allow a single cell to be selected
+    If Not Selection.Cells.Count = 1 Then
+        MsgBox "Please select only one cell, not " & Selection.Cells.Count
+        End
+    End If
+    
+    ' Only allow selection within a table
+    If Selection.ListObject Is Nothing Then
+        MsgBox "Please select a cell within a table"
+        End
+    End If
+
+    tableName = Selection.ListObject.name
+    Set table = ActiveSheet.ListObjects(tableName)
+    Set selectColumn = table.ListColumns(Selection.column)
+    
+    ' Cases
+    If Right(selectColumn.name, Len(orig)) = orig Then
+        ' 1+2. Selected a column with an orig suffix and the target column may or may not exist
+        sourceName = selectColumn.name
+        Set sourceColumn = selectColumn
+        targetName = Left(sourceName, Len(sourceName) - Len(orig))
+        Set targetColumn = InsertColumnBefore(table, targetName, sourceName)
+    Else
+        ' 3. Selected a column with a basic name and there is an orig suffix column
+        ' 4. Selected a column with a basic name and there is no orig suffix column - The 'normal' case
+        targetName = selectColumn.name
+        sourceName = selectColumn.name & orig
+        If ColumnExists(table, sourceName) Then
+            Set targetColumn = selectColumn
+            Set sourceColumn = table.ListColumns(sourceName)
+        Else
+            Set sourceColumn = selectColumn
+            sourceColumn.name = sourceName
+            Set targetColumn = InsertColumnBefore(table, targetName, sourceName)
+        End If
+    End If
+    
+    ' MsgBox "Copy from: " & tableName & "." & sourceName & " to " & targetName
+    targetColumn.DataBodyRange.value = sourceColumn.DataBodyRange.value
+    
+    table.HeaderRowRange(sourceColumn.index).Select
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .ThemeColor = xlThemeColorAccent1
+        .TintAndShade = 0.25
+    End With
+    With Selection.Font
+        .ThemeColor = xlThemeColorDark1
+        .TintAndShade = 0
+    End With
+
+
+    ' Restore the original range as promised
+    cur_range.Select
+End Sub
 
