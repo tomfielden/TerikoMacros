@@ -413,6 +413,7 @@ Sub PrepareTable()
     Dim table As ListObject
     Dim cur_sheet As Worksheet
     Dim cur_range As Range
+    Application.Calculation = xlManual
     
     ' Save so we can restore at end
     Set cur_sheet = ActiveSheet
@@ -431,6 +432,7 @@ Sub PrepareTable()
     ' Restore original seletion
     cur_sheet.Select
     cur_range.Select
+    Application.Calculation = xlAutomatic
 End Sub
 
 
