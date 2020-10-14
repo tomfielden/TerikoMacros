@@ -61,6 +61,11 @@ End Function
 Private Function InsertColumnBefore(table As ListObject, columnName As String, beforeName As String, Optional styleName As String = "Left") As ListColumn
     '
     Dim before_column As Long
+    
+    If Not ColumnExists(table, beforeName) Then
+        MsgBox "Missing required column: " & beforeName
+        End
+    End If
 
     If Not ColumnExists(table, columnName) Then
         before_column = table.ListColumns(beforeName).index
