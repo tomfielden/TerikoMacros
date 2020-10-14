@@ -353,9 +353,9 @@ Sub UpsertSYHalfColumn(table As ListObject, columnName As String, dateColumnName
         y = Year(column(row, 1))
         value = Application.WorksheetFunction.RoundUp(m / 6, 0)
         If value = 1 Then
-            column(row, 1) = "1H-" & y - 1 & "-" & y        ' 1H-<last>-<this>
+            column(row, 1) = "1H-" & y - 1 & "-" & y - 2000       ' 1H-<last>-<this>
         ElseIf value = 2 Then
-            column(row, 1) = "2H-" & y & "-" & y + 1        ' 2H-<this>-<next>
+            column(row, 1) = "2H-" & y & "-" & y + 1 - 2000       ' 2H-<this>-<next>
         Else
             column(row, 1) = value & "-" & y                    ' This shouldn't happen
         End If
@@ -380,9 +380,9 @@ Sub UpsertSYColumn(table As ListObject, columnName As String, dateColumnName As 
         y = Year(column(row, 1))
         value = Application.WorksheetFunction.RoundUp(m / 6, 0)
         If value = 1 Then
-            column(row, 1) = y - 1 & "-" & y        ' <last>-<this>
+            column(row, 1) = y - 1 & "-" & y - 2000       ' <last>-<this>
         ElseIf value = 2 Then
-            column(row, 1) = y & "-" & y + 1        ' <this>-<next>
+            column(row, 1) = y & "-" & y + 1 - 2000       ' <this>-<next>
         Else
             column(row, 1) = value & "-" & y        ' This shouldn't happen
         End If
