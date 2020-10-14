@@ -299,7 +299,7 @@ Private Sub UpsertItemColumn(table As ListObject, itemColumnName As String, befo
     arr(1, 6) = arr(1, 4)
     For row = 2 To num_rows
         ' manufacturer and SKU match previous row
-        If arr(row, 1) = arr(row - 1, 1) And arr(row, 2) = arr(row - 1, 2) Then
+        If arr(row, 1) = arr(row - 1, 1) And arr(row, 2) = arr(row - 1, 2) And Not IsEmpty(arr(row, 2)) Then
             ' copy previous description
             arr(row, 6) = arr(row - 1, 6)
         Else
