@@ -146,6 +146,10 @@ Private Function GetArray(table As ListObject, ByRef columnNames As Variant) As 
     
     For col = 1 To num_cols
         columnName = columnNames(col)
+        If Not ColumnExists(table, columnName) Then
+            MsgBox "Missing required column: " & columnName
+            End
+        End If
         column = table.ListColumns(columnName).DataBodyRange
         ' Copy data into array
         For row = 1 To num_rows
