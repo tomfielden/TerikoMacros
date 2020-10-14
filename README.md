@@ -47,3 +47,5 @@ Actions,
   * Item Pack
     * insert before *Pack Size*
     * For each (Manufacturer, #SKU) pair, choose the *Pack Size* with the largest *Cases (Product Detail)* value
+
+That's all!
