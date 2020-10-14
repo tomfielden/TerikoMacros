@@ -55,4 +55,9 @@ Actions,
     * insert before *Pack Size*
     * For each (Manufacturer, #SKU) pair, choose the *Pack Size* with the largest *Cases (Product Detail)* value
 
+### NOTES:
+* This macro can we re-run and will re-fill the data and pick up any changes in the source columns
+* The macro will detect if the table is already created
+* The macro will detect if the derived/new columns are already present and not insert new versions.
+
 That's all!
