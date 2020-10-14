@@ -402,6 +402,12 @@ Sub PrepareTable()
     ' Re-entrant code. We don't need to call this directly.
     '
     Dim table As ListObject
+    Dim cur_sheet As Worksheet
+    Dim cur_range As Range
+    
+    ' Save so we can restore at end
+    Set cur_sheet = ActiveSheet
+    Set cur_range = Selection
 
     Set table = GetDataTable("DataTable")
     
@@ -413,7 +419,9 @@ Sub PrepareTable()
     UpsertItemColumn table, "Item Description", "PRODUCT_DESCRIPTION"
     UpsertItemColumn table, "Item Pack", "Pack Size"
     
-
+    ' Restore original seletion
+    cur_sheet.Select
+    cur_range.Select
 End Sub
 
 
