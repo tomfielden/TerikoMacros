@@ -5,6 +5,13 @@ Each VBA/macro module is a file with a *.bas* filename extension.
 To use a VBA/macro
 1. Download the desired module
   * Ex: ManufacturerUtils.bas to your computer.
+  * Click *modules/ManufacturerUtils.bas*
+  * Click the *Raw* button
+  * Ctrl-A
+  * Open "Notebook" (NOT Word!!!)
+  * Ctrl-V (paste) in the Notebook
+  * Save As...
+  * (some directory)/ManufacturerUtils.bas
 2. Open the Excel workbook intended to hold macros.
   * It's file extension is: *.xlsm*
 3. Click *Developer* tab
