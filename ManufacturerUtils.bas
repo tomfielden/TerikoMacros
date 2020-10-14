@@ -196,6 +196,7 @@ Private Function GetArrayColumn(ByRef arr As Variant, col_index As Long) As Vari
     GetArrayColumn = column
 End Function
 
+
 Private Function ArrayToSheet(ByRef arr As Variant, sheetName As String) As Worksheet
     Dim sheet As Worksheet
 
@@ -247,7 +248,7 @@ Private Sub SortArray(ByRef arr As Variant, ByRef sort_cols As Variant)
         .Apply
     End With
 
-    arr = sheet.Range(sheet.Cells(1, 1), sheet.Cells(UBound(arr, 1), UBound(arr, 2))).Value
+    arr = sheet.Range(sheet.Cells(1, 1), sheet.Cells(UBound(arr, 1), UBound(arr, 2))).value
 
     ' Cleanup
     ActiveWorkbook.Worksheets(ws_index).Select
@@ -261,16 +262,23 @@ Private Sub SortArray(ByRef arr As Variant, ByRef sort_cols As Variant)
 End Sub
 
 
-
-
 Private Sub UpsertItemColumn(table As ListObject, itemColumnName As String, beforeColumnName As String)
+    '
+    ' Insert the Item column in the desired place, if not present
+    ' Pull necessary values into and array
+    ' Add an index field (to allow resort) and a blank field for results
+    ' Sort the array (with the help of temporary sheet
+    ' Apply the grouping algorithm
+    ' Resort to original order
+    ' Store results into target column, even if not empty
     '
     Dim arr() As Variant
     Dim column() As Variant
     Dim num_rows As Long
     Dim row As Long
     
-    InsertColumnBefore table, itemColumnName, beforeColumnName, "Left"
+    InsertColumnBefore table, itemColumnName, beforeColumnName
+    
     arr = GetArray(table, Array("Manufacturer", "#SKU", "Cases (Product Detail)", beforeColumnName))
     num_rows = UBound(arr, 1)
     
@@ -294,9 +302,99 @@ Private Sub UpsertItemColumn(table As ListObject, itemColumnName As String, befo
     'Re-Sort by the index column to get original order
     SortArray arr, [{5}]
     ' Write the result to the table
-    table.ListColumns(itemColumnName).DataBodyRange.Value = GetArrayColumn(arr, 6)
+    table.ListColumns(itemColumnName).DataBodyRange.value = GetArrayColumn(arr, 6)
 End Sub
 
+
+Sub UpsertQtrColumn(table As ListObject, columnName As String, dateColumnName As String)
+    '
+    Dim column As Variant
+    Dim row As Long
+    Dim m As Variant
+    Dim y As Variant
+    Dim value As Variant
+    
+    InsertColumnBefore table, columnName, dateColumnName
+    column = table.ListColumns(dateColumnName).DataBodyRange
+
+    For row = 1 To UBound(column, 1)
+        m = month(column(row, 1))
+        y = Year(column(row, 1))
+        value = Application.WorksheetFunction.RoundUp(m / 3, 0)
+        column(row, 1) = "Q" & value & "-" & y
+    Next row
+    table.ListColumns(columnName).DataBodyRange.value = column
+    
+End Sub
+
+
+Sub UpsertSYHalfColumn(table As ListObject, columnName As String, dateColumnName As String)
+    '
+    Dim column As Variant
+    Dim row As Long
+    Dim m As Variant
+    Dim y As Variant
+    Dim value As Variant
+    
+    InsertColumnBefore table, columnName, dateColumnName
+    column = table.ListColumns(dateColumnName).DataBodyRange
+
+    For row = 1 To UBound(column, 1)
+        m = month(column(row, 1))
+        y = Year(column(row, 1))
+        value = Application.WorksheetFunction.RoundUp(m / 6, 0)
+        If value = 1 Then
+            column(row, 1) = "1H-" & y - 1 & "-" & y        ' 1H-<last>-<this>
+        ElseIf value = 2 Then
+            column(row, 1) = "2H-" & y & "-" & y + 1        ' 2H-<this>-<next>
+        Else
+            column(row, 1) = value & "-" & y                    ' This shouldn't happen
+        End If
+    Next row
+    table.ListColumns(columnName).DataBodyRange.value = column
+End Sub
+
+
+Sub UpsertSYColumn(table As ListObject, columnName As String, dateColumnName As String)
+    '
+    Dim column As Variant
+    Dim row As Long
+    Dim m As Variant
+    Dim y As Variant
+    Dim value As Variant
+    
+    InsertColumnBefore table, columnName, dateColumnName
+    column = table.ListColumns(dateColumnName).DataBodyRange
+
+    For row = 1 To UBound(column, 1)
+        m = month(column(row, 1))
+        y = Year(column(row, 1))
+        value = Application.WorksheetFunction.RoundUp(m / 6, 0)
+        If value = 1 Then
+            column(row, 1) = y - 1 & "-" & y        ' <last>-<this>
+        ElseIf value = 2 Then
+            column(row, 1) = y & "-" & y + 1        ' <this>-<next>
+        Else
+            column(row, 1) = value & "-" & y        ' This shouldn't happen
+        End If
+    Next row
+    table.ListColumns(columnName).DataBodyRange.value = column
+End Sub
+
+
+Sub UpsertYearColumn(table As ListObject, columnName As String, dateColumnName As String)
+    '
+    Dim column As Variant
+    Dim row As Long
+    
+    InsertColumnBefore table, columnName, dateColumnName
+    column = table.ListColumns(dateColumnName).DataBodyRange
+
+    For row = 1 To UBound(column, 1)
+        column(row, 1) = Year(column(row, 1))
+    Next row
+    table.ListColumns(columnName).DataBodyRange.value = column
+End Sub
 
 Sub PrepareTable()
     '
@@ -307,12 +405,14 @@ Sub PrepareTable()
 
     Set table = GetDataTable("DataTable")
     
+    UpsertQtrColumn table, "Qtr", "Date"
+    UpsertSYHalfColumn table, "SY-Half", "Date"
+    UpsertSYColumn table, "SY", "Date"
+    UpsertYearColumn table, "Year", "Date"
+
     UpsertItemColumn table, "Item Description", "PRODUCT_DESCRIPTION"
     UpsertItemColumn table, "Item Pack", "Pack Size"
     
-    InsertColumnBefore table, "School Year", "Date"
-    InsertColumnBefore table, "School Year 1H", "Date"
-    InsertColumnBefore table, "Year", "Date"
 
 End Sub
 
