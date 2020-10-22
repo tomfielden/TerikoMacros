@@ -1,0 +1,82 @@
+-- 2020-10-15 --
+
+* Delievered "ManufacturerUtils.bas" to Teriko today
+* More things to set up for Mac development
+    * https://dev.to/v3frankie/setup-your-mac-for-development-2020-edition-1c8a
+    * brew install node
+    * brew pin node
+    * brew install n
+    * brew cask install visual-studio-code
+    * npm install -g grunt-cli
+    * defaults write com.apple.finder ShowStatusBar -bool true
+    * # brew cask install hyper
+    * zsh --version
+    * sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    * git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    * plugins=(
+        zsh-autosuggestions
+        zsh-syntax-highlighting
+    )
+    * git config --global user.name “Tom Fielden”
+    * git config --global user.email “tom@tomfielden.com”
+* Starting tutorial for Excel Add-ins
+    * https://docs.microsoft.com/en-us/office/dev/add-ins/tutorials/excel-tutorial
+    * npm install -g yo generator-office
+    * To create an Office Add-in run,
+        * export NODE_PATH=/usr/local/lib/node_modules
+        * npm i -g nan
+        * yo office
+            * Panel
+            * Javascript
+            * TerikoTools
+            * npm start
+            * code .
+    * https://docs.microsoft.com/en-us/office/dev/add-ins/excel/excel-add-ins-tables
+
+-- 2020-10-16 --
+Apache Superset + Docker + Postgres + ...
+See: https://superset.apache.org/
+
+Superset uses a number of backend technologies and allows choices.
+* Web Server (Apache, Gunicorn, Nginx)
+* Metadata store (Postgres, etc)
+* message queue (Redis, etc)
+* Results backend (Redis, etc)
+* Caching layer (Redis, etc)
+* Services: NewRelic, StatsD, DataDog, for analytic workloads
+* Can run inside Kubernetes cluster service 600+ active concurrent users and 100K charts/day
+
+Yikes! Superset does not officially support Windoze, but has a VM workaround. Oh dear. We'll see.
+* Need Docker engine and Docker-compose
+* See: https://hub.docker.com/repositories
+
+* I was able to build a docker container from a downloaded project by creating a Docker file.
+* I got the project running in a container image, ran the code that stored stuff in a Sqlite3 database
+* I was able to attach (using Docker Hub) to the running container image
+* I used Node.js REPL to read the Sqlite3 database and find the results I input,
+    > let sqlite3 = require('sqlite3').verbose();
+    undefined
+    > let db = new sqlite3.Database("/etc/todos/todo.db");
+    undefined
+    > db.each("select * from todo_items", function(err, row) {
+    ... console.log(row.id+": "+row.name);
+    ... });
+    Database { open: true, filename: '/etc/todos/todo.db', mode: 65542 }
+    > 37c922f3-b323-4719-869b-3ad054d2fc22: Take out trash
+    b21f24bb-bd69-4441-a0e6-1f2ba6134262: Hope for happiness
+    9d6bd1dc-83e5-40ff-8d44-b7dcc87b7634: Blindly obey
+* docker volume create todo-db
+* docker volume inspect todo-db
+
+    docker run -dp 3000:3000 \
+    -w /app \
+    -v "$(pwd):/app" \
+    -v todo-db:/etc/todos \
+    node:12-alpine \
+    sh -c "yarn install && yarn run dev"
+
+
+
+
+
+
